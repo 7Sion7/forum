@@ -16,6 +16,6 @@ On this page users can comment, like and dislike, as well as post stuff.
 
 Here's an image of the sign in page:
 
-![Image of login page](images/Loginage.png)
+![Image of login page](images/LoginPage.png)
 
 On this page users can create an account or login.
