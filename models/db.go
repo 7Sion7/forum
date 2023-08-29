@@ -38,52 +38,66 @@ func InitDB() {
 			id INTEGER PRIMARY KEY,
 			title TEXT,
 			content TEXT,
-			category_id INTEGER,
-			user_id INTEGER,
+			userId INTEGER,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY(category_id) REFERENCES categories(id),
-			FOREIGN KEY(user_id) REFERENCES users(id)
+			FOREIGN KEY(userId) REFERENCES users(id)
+		);
+
+		CREATE TABLE IF NOT EXISTS post_categories (
+			id INTEGER PRIMARY KEY,
+			post_id INTEGER,
+			category_id INTEGER,
+			FOREIGN KEY (post_id) REFERENCES posts(id),
+			FOREIGN KEY (category_id) REFERENCES categories(id)
 		);
 
 		CREATE TABLE IF NOT EXISTS comments (
 			id INTEGER PRIMARY KEY,
 			content TEXT,
-			post_id INTEGER,
-			user_id INTEGER,
+			postId INTEGER,
+			userId INTEGER,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY(post_id) REFERENCES posts(id),
-			FOREIGN KEY(user_id) REFERENCES users(id)
+			FOREIGN KEY(postId) REFERENCES posts(id),
+			FOREIGN KEY(userId) REFERENCES users(id)
 		);
 
 		CREATE TABLE IF NOT EXISTS likes (
 			id INTEGER PRIMARY KEY,
-			post_id INTEGER,
+			postId INTEGER,
 			comment_id INTEGER,
-			user_id INTEGER,
+			userId INTEGER,
 			value INTEGER,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY(post_id) REFERENCES posts(id),
+			FOREIGN KEY(postId) REFERENCES posts(id),
 			FOREIGN KEY(comment_id) REFERENCES comments(id),
-			FOREIGN KEY(user_id) REFERENCES users(id)
+			FOREIGN KEY(userId) REFERENCES users(id)
 		);
 
         CREATE TABLE IF NOT EXISTS dislikes (
             id INTEGER PRIMARY KEY,
-            post_id INTEGER,
+            postId INTEGER,
             comment_id INTEGER,
-            user_id INTEGER,
+            userId INTEGER,
             value INTEGER,
-            FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
+            FOREIGN KEY (postId) REFERENCES posts (id) ON DELETE CASCADE,
             FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
         );
         
 	`)
 	if err != nil {
 		log.Fatal(err)
+	}
+	_, err1 := db.Exec("INSERT OR IGNORE INTO categories (name) VALUES (?)", "etymology")
+	if err1 != nil {
+		fmt.Println("cant insert into categoriy at the start")
+	}
+	_, err2 := db.Exec("INSERT OR IGNORE INTO categories (name) VALUES (?)", "biology")
+	if err2 != nil {
+		fmt.Println("cant insert into categoriy at the start")
 	}
 
 	// Set database connection pool limits
@@ -91,18 +105,18 @@ func InitDB() {
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * 60 * 1000)
 
-	fmt.Println("Database initialized")
+	fmt.Printf("Database initialized\n")
 }
 
-func InsertDB(username, email, password string) error {
+func InsertDB(username, email, password, seshId string) error {
 	// Prepare the SQL statement to insert a new post
-	stmt, err := db.Prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)")
+	stmt, err := db.Prepare("INSERT INTO users (username, email, password, sessionId) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	// Execute the prepared statement with the provided values and current timestamp
-	_, err = stmt.Exec(username, email, password)
+	_, err = stmt.Exec(username, email, password, seshId)
 	if err != nil {
 		return err
 	}
@@ -124,6 +138,13 @@ func GetID(email string) (int, error) {
 	}
 	return userID, nil
 }
+
+// func DeleteLikesTable() {
+// 	_, err := db.Exec("DELETE FROM dislikes")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
 
 func CloseDB() {
 	if db != nil {

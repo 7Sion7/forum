@@ -1,17 +1,3 @@
-<!-- 
-fa-sign-in
-fa-sign-out
-fa-user
-fa-user-o
-fa-users
-fa-user-md
-fa-user-secret
-fa-user-plus
-fa-user-times
-fa-user-circle
-fa-user-circle-o
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,74 +9,141 @@ fa-user-circle-o
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital@1&display=swap" rel="stylesheet">
 </head>
-
+<script src="../static/script.js" defer></script>
 <body>
-    <header>
-            <!--NavBar Section-->
-        <div class="navbar">
-            <nav class="navigation hide" id="navigation">
-                <span class="close-icon" id="close-icon" onclick="IconBar()"><i class="fa fa-close"></i></span>
-                <ul class="nav-list">
-                    <li class="nav-item"><a href="/">Posts <i class="fa fa-home"></i></a></li>
-                    <li class="nav-item"><a href="/posts">Users</a></li>
-                    <li class="nav-item user"><a href="/sign-in">Sign In</i> <i class="fa fa-user-circle"></i><i class="fa fa-sign-in"></i></li></a>
-                    <!-- If user has Signed In, <i class="fa fa-sign-in"> should be replaced with  <i class="fa fa-sign-out">-->
-                </ul>
-            </nav>
-            <a class="bar-icon" id="iconBar" onclick="IconBar()"><i class="fa fa-bars"></i></a>
-            <div class="brand">Forum</div>
-        </div>
-        <!--SearchBox Section-->
-        <div class="search-box">
-            <div>
-                <select name="categories" id="categories">
-                    <option value="Everything">Everything</option>
-                    <option value="Titles">Titles</option>
-                    <option value="Descriptions">Descriptions</option>
-                </select>
-                <input type="text" name="q" placeholder="search ...">
-                <button>Search <i class="fa fa-search"></i></button>
-            </div>
-        </div>
+    {{if .}}
+    {{if .Available}}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            signIn();
 
-        {{if .}}
-        <h4><p>Welcome to Forum <u>{{.Username}}</u>!</p></h4>
-        {{end}}
+        })
+    </script>
+    {{end}}
+    <header>
+        <nav class="navbar">
+            <a href="/" class="brand">Forum</a>
+            {{if .UserInfo}}
+            <a class="account" id="account-link">{{.UserInfo.Username}}<i class ="fa fa-user-circle"></i></a>
+            {{end}}
+            <a class="sign-in" id="sign-in">Sign In<i class="fa fa-sign-in" id="sign-i"></i></a>
+        </nav>
     </header>
-    <div class="container">
-        <!--Navigation-->
-        <div class="navigate">
-            <span> <a href="/account"><i class ="fa fa-user-circle"></i></a> > <a href="/">Forum</a> >> <a href="/posts">Users</a></span>
-        </div>
-        <!--Display posts table-->
-        <div class="posts-table">
-            <div class="table-head">
-                <div class="status">Status</div>
-                <div class="subjects">Subjects</div>
-                <div class="replies">Likes/Dislikes</div>
-            </div>
-            <div class="table-row">
-                <div class="status"><i class="fa fa-fire"></i></div>
-                <div class="subjects">
-                    <a href="">Is learning Python on 2021 worth it?</a>
-                    <br>
-                    <span>Started by <b><a href="">User</a></b> .</span>
+    <div class="everything">
+        <button class="post_btn" id="create-post-button">Create Post <span class="plus-sign">&plus;</span></button>
+        <div id="modal-container">
+            <div class="post-form" id="post-form">
+                <div class="form-header">
+                    <span id="close-button" onclick="closePopup()" >&times;</span>
+                    <h2>Create post</h2>
                 </div>
-                <div class="replies">
-                <span id="likeCount">0</span><button id="like" onclick="incrementLikes('')"><i class="fa fa-thumbs-o-up like"></i></button> <br> <span id="dislikeCount">0</span> <button id="dislike" onclick="incrementDislikes()"><i class="fa fa-thumbs-o-down like"></i></button>
-                </div>
+                    <form action="/post" id="create-post-form" method="post">
+                        <div class="categories">
+                            <h3 class="categories-header">Categories:</h3>
+                            <div class="category">
+                                <label for="etymology">etymology</label>
+                                <input type="checkbox"  id="etymology" name="category"
+                                    value="etymology">
+                            </div>
+                            <div class="category">
+                                <label for="biology">biology</label>
+                                <input type="checkbox" id="biology" name="category" value="biology">
+                            </div>
+                        </div>
+                            <label for="image">Upload Image:</label>
+                            <input type="file" id="image" name="image">
+                            <input id="title" type="text" name="title" placeholder="Title" required>
+                            <textarea class="form-text" name="content" placeholder="Content" required></textarea>
+                            <button type="submit">Submit</button>
+                    </form>
             </div>
-            <!--starts here-->
-            <!--ends here-->
         </div>
-        <!--Pagination starts-->
-            <div class="pagination">
-                pages: <a href="">1</a><a href="">2</a><a href="">3</a>
+        <div class="error-container" id="err">
+            <div class="error-popup">
+                <p>You are not logged in. Please log in to continue.</p>
+                <button onclick="closePopup()">Close</button>
             </div>
-        <!--pagination ends-->
+        </div>
+        <div class="overlay" id="popup-container">
+            <div class="popup-container" id="container-div">
+                <a class="close" onclick="closePopup()" id="close">&times;</a>
+            <div class="signup cntr" id="signup">
+                <form id="sign-up-form" method="POST" action="/sign-up">
+                <label class="labels">Join <span class="forum">Forum</span></label>
+                <br>
+                <br>
+                <br>
+                <span class="error-message" id="error"></span>
+                <p><input type="text" name="username" placeholder="Username" onblur="checkUsername(this.value)" required></p>
+                <p><input type="email" name="email" placeholder="Email" onblur="checkEmail(this.value)" required></p>
+                <p><input type="password" name="password" placeholder="Password" required></p>
+                <button type="submit">Sign up</button>
+                </form>
+                <p class="text">Already have an account? <a class="register" id="login_btn">Log In</a></p>
+            </div>
+            <div id="sign_out" class="sign-out cntr">
+                <label class="labels">Are you sure you want to sign out?</label>
+        
+                <input type="button" onclick="signOut()" value="Yes">
+                <input type="button" onclick="closePopup()" value="No">
+            </div>
+            <div class="login cntr" id="login">
+                <form id="sign-in-form" method="POST" action="/log-in">
+                <label class="labels">Sign In to <span class="forum">Forum</span></label>
+                <br>
+                <br>
+                <br>
+                <p><input type="email" name="email" placeholder="Email" required></p>
+                <p><input type="password" name="password" placeholder="Password" required></p>
+                <button type="submit">Log In</button>
+                </form>
+                <p class="text">Don't have an account? <a class="register" id="register_btn">Register</a></p>
+            </div>
+            </div>
+        </div>
+        {{if .UserInfo}}
+        {{if .UserInfo.Post}}
+        {{range .UserInfo.Post}}
+        <div class="posts" id="post{{.ID}}">
+            <pre class="author" ><i class="fa fa-user-circle"></i>{{.Username}}</pre>
+            <br>
+            <br>
+            <div class="content">
+                <p class="title" id="{{.ID}}-title">{{.Title}}</p>
+                <!-- <div class="image"><img src="../dog.jpg" alt="">Image</div> -->
+                <div class="written-content" id="{{.ID}}-content">{{.Content}}</div>
+            </div>
+            <br>
+            <div class="comment-page"> 
+            <div class="comment" >
+                <textarea class="comment-box" name="comment" id="{{.ID}}-comment" rows="2" cols="40" placeholder="Write your comment..." required></textarea>
+                <button id="{{.ID}}" class="submit-button" type="submit" onclick="comment(this.id)">Comment</button>
+            </div>
+            <div class="interaction-container">
+                <div class="likes-container" id="likes-container-{{.ID}}">
+                    <button class="like-button" id="{{.ID}}-like" onclick="likeSender(this.id)">
+                    <i class="fa fa-thumbs-o-up"></i>
+                    <span class="like-count" id="{{.ID}}-1">{{.Likes}}</span>
+                    </button>
+                    <button class="dislike-button" id="{{.ID}}-dislike" onclick="likeSender(this.id)">
+                        <i class="fa fa-thumbs-o-down"></i>
+                        <span class="dislike-count" id="{{.ID}}-2">{{.Dislikes}}</span>
+                    </button>
+                </div>
+                <span id="comment-btn-{{.ID}}" class="btns" onclick="showComments(this.id)">{{.NumOfComms}} <i class="fa fa-comment"></i> comments</span>
+            </div>
+            <div class="comment-section" id="comment-section-{{.ID}}">
+        </div>
+        </div>
+        </div>
+        <br>
+        <br>
+        {{end}}
+        {{end}}
+        {{end}}
+        {{end}}
     </div>
 </body>
-<script src="../static/script.js"></script>
-<footer>
-    <span>&copy;  Forum | All Rights Reserved</span>
+<!-- <footer>
+    <span>&copy;  Forum | All Rights Reserved</span> -->
 </html>

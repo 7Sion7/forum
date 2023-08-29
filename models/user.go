@@ -2,15 +2,14 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserCheckResponse struct {
-	ID        int  `json:"id"`
 	Available bool `json:"available"`
-	UserInfo  User
+	UserInfo  *User
 }
 
 type User struct {
@@ -19,10 +18,16 @@ type User struct {
 	Username  string `json:"username"`
 	Password  string `json:"-"`
 	SessionId string `json:"sessionid"`
-	Post     Content
-	Likes    int
-	Dislikes int
-	Comments string
+	Post      []Post
+}
+
+func getUsernameByID(Id int) string {
+	var username string
+	err := db.QueryRow("SELECT username FROM users WHERE id = ?", Id).Scan(&username)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return username
 }
 
 func (newUser User) Register() error {
@@ -30,65 +35,17 @@ func (newUser User) Register() error {
 	if err != nil {
 		return err
 	}
-	err = InsertDB(newUser.Username, newUser.Email, string(Password))
+
+	err = InsertDB(newUser.Username, newUser.Email, string(Password), newUser.SessionId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (user User) LogIn() (UserCheckResponse, error) {
-	checked, err := Check4User(user.Email, user.Password)
-	if err != nil {
-		return UserCheckResponse{Available: checked}, err
-	}
-
-	userInfo, err := user.GetUserByID()
-	if err != nil {
-		return UserCheckResponse{}, err
-	}
-	return UserCheckResponse{Available: checked, UserInfo: userInfo}, nil
-}
-
-func (user User) GetUserByID() (User, error) {
-	ID, err := GetID(user.Email)
-	if err != nil {
-		return User{}, err
-	}
-	user.ID = ID
-	content, err := getUserContent(user.ID)
-	if err != nil {
-		return User{}, err
-	}
-	likes, err := GetLikes(user.ID)
-	if err != nil {
-		return User{}, err
-	}
-
-	dislikes, err := getDislikes(user.ID)
-	if err != nil {
-		return User{}, err
-	}
-
-	comments, err := getComments(user.ID)
-	if err != nil {
-		return User{}, err
-	}
-
-	user = User{
-		Post:     content,
-		Likes:    likes,
-		Dislikes: dislikes,
-		Comments: comments,
-	}
-
-	return user, err
-}
-
 func SetSessionId(email, sessionId string) error {
 	_, err := db.Exec("UPDATE users SET sessionId = ? WHERE email = ?", sessionId, email)
 	if err != nil {
-		fmt.Println("failed to update session ID:", err)
 		return err
 	}
 	return nil
@@ -111,7 +68,6 @@ func IsEmailAvailable(email string) (bool, error) {
 	}
 	return count == 0, nil
 }
-
 
 func ComparePasswords(hashedPassword, userPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(userPassword))

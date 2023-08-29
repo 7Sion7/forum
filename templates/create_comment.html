@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+
+  .posts {
+    height: auto;
+    width: 30%;
+    text-align: center;
+    background-color: rgb(249, 255, 255);
+    justify-content: center; /* Center horizontally */
+    margin: auto;
+    border-radius: 5%;
+    border-style: groove;
+    border-color: inherit;
+    box-shadow: 0.25em 0.25em 1em 0px #333;
+}
+.submit-button {
+    background-color: white;
+    border-radius: 0.5em 0.5em 2em 2em;
+    padding: 0.2em 1em;
+    float: right;
+    border-width: 0.1em;
+    cursor: pointer;
+}
+
+.author{
+    float: left;
+    color:  rgb(63, 89, 146);
+    font-weight: bold;
+    margin-left: 1em;
+    font-size: 1.25em;
+}
+
+.content{
+    margin: auto;
+    padding: 1.25em;
+}
+
+.title{
+    font-size: 1.25em;
+    text-align: center;
+    text-decoration: underline;
+}
+
+.written-content{
+    padding: 1em 1em;
+    margin: 2em;
+    text-align: left;
+}
+
+.dropdown{
+  margin-left: 23em;
+  padding: 0.15em 0.15em;
+}
+/* Style the button */
+.dots-button {
+  background-color: transparent;
+  border: none;
+  border-radius: 5em;
+  font-size: 1.125em; /* 18px converted to em */
+  cursor: pointer;
+  transform: rotate(90deg);
+}
+
+/* Style the dropdown content */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #ffffff;
+  min-width: 10em; /* 160px converted to em */
+  box-shadow: 0.5em 0.5em 1em 0px rgba(0, 0, 0, 0.2); /* Converted to em */
+  z-index: 1;
+  top: 1.5em; /* 1.5em converted to em */
+}
+
+/* Style the dropdown links */
+.dropdown-content a {
+  padding: 0.2em; /* 12px and 16px converted to em */
+  text-decoration: none;
+  display: block;
+  color: #333;
+}
+
+/* Change link color on hover */
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
+</style>
+
+<script>
+  function toggleDropdown() {
+  var dropdown = document.getElementById("myDropdown");
+  if (dropdown.style.display === "block") {
+    dropdown.style.display = "none";
+  } else {
+    dropdown.style.display = "block";
+  }
+}
+
+window.onclick = function (event) {
+  if (!event.target.matches('.dots-button')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.style.display === "block") {
+        openDropdown.style.display = "none";
+      }
+    }
+  }
+}
+</script>
+<body>
+  <div class="posts">
+    <div class="dropdown">
+      <button class="dots-button" onclick="toggleDropdown()">...</button>
+      <div class="dropdown-content" id="myDropdown">
+        <a href="#">Edit</a>
+        <a href="#">Delete</a>
+      </div>
+    </div>
+    <pre class="author" ><i class="fa fa-user-circle"></i> {{.Username}}</pre>
+    <br>
+    <br>
+    <div class="content">
+        <p class="title">{{.Title}}</p>
+        <!-- <div class="image"><img src="../dog.jpg" alt="">Image</div> -->
+        <div class="written-content" >{{.Content}}</div>
+    </div>
+    <br>
+    <div class="comment-page"> 
+    <div class="comment" >
+        <textarea class="comment-box" name="comment" id="{{.ID}}-comment" rows="2" cols="40" placeholder="Write your comment..." required></textarea>
+        <button id="{{.ID}}" class="submit-button" type="submit" onclick="comment(this.id)">Comment</button>
+    </div>
+    <div class="interaction-container">
+        <div class="likes-container" id="likes-container-{{.ID}}">
+            <button class="like-button" id="{{.ID}}-like" onclick="likeSender(this.id)">
+            <i class="fa fa-thumbs-o-up"></i>
+            <span class="like-count" id="{{.ID}}-1">{{.Likes}}</span>
+            </button>
+            <button class="dislike-button" id="{{.ID}}-dislike" onclick="likeSender(this.id)">
+                <i class="fa fa-thumbs-o-down"></i>
+                <span class="dislike-count" id="{{.ID}}-2">{{.Dislikes}}</span>
+            </button>
+        </div>
+        <span id="comment-btn-{{.ID}}" class="btns" onclick="showComments(this.id)">{{.NumOfComms}} <i class="fa fa-comment"></i> comments</span>
+    </div>
+    <div class="comment-section" id="comment-section-{{.ID}}">
+</div>
+</div>
+</div>
+</body>
+</html>

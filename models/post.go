@@ -1,93 +1,180 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+)
 
-type Content struct {
-	ID         int
-	Title      string
-	Content    string
-	CategoryID int
-	UserID     int
-	CreatedAt  time.Time
-	UpdatedAt  string
+type Post struct {
+	ID         int	`json:"id"`
+	Title      string	`json:"title"`
+	Content    string	`json:"content"`
+	Username   string	`json:"username"`
+	Categories []string
+	NumOfComms int
+	Comments   []Comment
+	Likes      int
+	Dislikes   int
 }
 
-type Posts struct {
-	content []Content
+func SessionIsActive(sessionId string) (bool, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE sessionId = ?", sessionId).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
-var AllPosts *Posts
-
-func getUserContent(ID int) (Content, error) {
-	var content Content
-
-	stmt, err := db.Prepare("SELECT title FROM posts WHERE id = ?")
+func SavePost(title, content string, userId int) (int, error) {
+	result, err := db.Exec("INSERT INTO posts (title, content, userId) Values (?, ?, ?)", title, content, userId)
 	if err != nil {
-		return Content{}, err
+		return 0, err
 	}
-	defer stmt.Close()
-
-	var title string
-
-	err = stmt.QueryRow(ID).Scan(&title)
+	postId, err := result.LastInsertId()
 	if err != nil {
-		return Content{}, err
+		return 0, err
 	}
-
-	stmt, err = db.Prepare("SELECT content FROM posts WHERE id = ?")
-	if err != nil {
-		return Content{}, err
-	}
-	defer stmt.Close()
-
-	var post string
-
-	err = stmt.QueryRow(ID).Scan(&post)
-	if err != nil {
-		return Content{}, err
-	}
-
-	stmt, err = db.Prepare("SELECT created_at FROM posts WHERE id = ?")
-	if err != nil {
-		return Content{}, err
-	}
-	defer stmt.Close()
-
-	var timeCreated time.Time
-
-	err = stmt.QueryRow(ID).Scan(&timeCreated)
-	if err != nil {
-		return Content{}, err
-	}
-
-	content = Content{
-		Title: title,
-		Content: post,
-		CreatedAt: timeCreated,
-	}
-
-	return content, nil
+	return int(postId), nil
 }
 
-func GetAllContent() (interface{}, error){
-	rows, err := db.Query("SELECT * FROM posts")
+func (post Post) EditPost() (string, error) {
+	_, err := db.Exec("UPDATE users SET title = ? AND content = ? WHERE id = ?", post.Title, post.Content, post.ID)
+	if err != nil {
+		return "Failed to edit posts", err
+	}
+
+	return "Post Edited Successfully", nil
+}
+
+func (post Post) DeletePost() (string, error) {
+	_, err := db.Exec("DELETE FROM posts WHERE postId = ?", post.ID)
+	if err != nil {
+		return "Failed to delete post",err
+	}
+
+	return "Post deleted successfully!", nil
+}
+
+func GetUserByCookie(r *http.Request) (*User, error) {
+
+	var username string
+
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		return &User{}, err
+	}
+	sessionId := cookie.Value
+	var userId int
+	err = db.QueryRow("SELECT id, username FROM users WHERE sessionId = ?", sessionId).Scan(&userId, &username)
+	if err != nil {
+		fmt.Println("here", err)
+		return &User{}, err
+	}
+
+	user := &User{ID: userId, Username: username}
+
+	return user, nil
+}
+
+func GetPostsFromDB() ([]Post, error) {
+	query := `
+		SELECT posts.id, posts.title, posts.content, users.username,
+			GROUP_CONCAT(DISTINCT categories.name) AS categoryNames,
+			COALESCE(SUM(CASE WHEN likes.value = 1 THEN 1 ELSE 0 END), 0) AS likes,
+			COALESCE(SUM(CASE WHEN dislikes.value = -1 THEN 1 ELSE 0 END), 0) AS dislikes
+		FROM posts
+		INNER JOIN users ON posts.userId = users.id
+		INNER JOIN post_categories ON posts.id = post_categories.post_id
+		INNER JOIN categories ON post_categories.category_id = categories.id
+		LEFT JOIN likes ON likes.postId = posts.id
+		LEFT JOIN dislikes ON dislikes.postId = posts.id
+		GROUP BY posts.id, users.username
+		ORDER BY posts.id DESC
+	`
+
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var posts []Content
+	posts := []Post{}
 	for rows.Next() {
-		var post Content
-		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.CategoryID, &post.UserID, &post.CreatedAt, &post.UpdatedAt)
+		var title, content, username, categoryNames string
+		var postID int
+		var likes, dislikes int
+		err := rows.Scan(&postID, &title, &content, &username, &categoryNames, &likes, &dislikes)
 		if err != nil {
 			return nil, err
 		}
+		categories := strings.Split(categoryNames, ",")
+		post := Post{
+			ID:         postID,
+			Title:      title,
+			Content:    content,
+			Username:   username,
+			Categories: categories,
+			Likes:      likes,
+			Dislikes:   dislikes,
+		}
+
+		comments, err := GetCommentsForPost(postID)
+		if err != nil {
+			return nil, err
+		}
+
+		post.NumOfComms = len(comments)
+
 		posts = append(posts, post)
 	}
-	if err := rows.Err(); err != nil {
+
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	AllPosts = &Posts{content: posts}
-	return AllPosts, nil
+
+	return posts, nil
+}
+
+func GetCommentsForPost(postID int) ([]Comment, error) {
+	query := `
+		SELECT id, content, userId
+		FROM comments
+		WHERE postId = ?
+		ORDER BY id DESC
+	`
+
+	rows, err := db.Query(query, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	comments := []Comment{}
+	for rows.Next() {
+		var commentID int
+		var content string
+		var userID int
+		err := rows.Scan(&commentID, &content, &userID)
+		if err != nil {
+			return nil, err
+		}
+		comment := Comment{
+			ID:       commentID,
+			UserID:   userID,
+			Username: getUsernameByID(userID),
+			PostID:   strconv.Itoa(postID),
+			Comment:  content,
+		}
+
+		comments = append(comments, comment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
 }
