@@ -8,189 +8,135 @@ import (
 	"strconv"
 )
 
+type SessionStatusResponse struct {
+	LoggedIn bool `json:"loggedIn"`
+}
+
 func CheckSession(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
-		http.Error(w, "unathorized to post", http.StatusUnauthorized)
+		response := SessionStatusResponse{
+			LoggedIn: false,
+		}
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			fmt.Println("cant marshal the response into json")
+
+		}
 		return
 	}
+
 	sessionId := cookie.Value
-	loggedIn, err := m.SessionIsActive(sessionId)
+
+	_, loggedIn, err := m.SessionIsActive(sessionId)
+
 	if err != nil {
 		http.Error(w, "unathorized: invalid sesh id", http.StatusUnauthorized)
-		return
-	}
-	if loggedIn {
-
-		w.WriteHeader(http.StatusOK)
+		fmt.Println(err, "invalid sesh id")
 		return
 	}
 
-	w.WriteHeader(http.StatusUnauthorized)
+	response := SessionStatusResponse{
+		LoggedIn: loggedIn,
+	}
+	fmt.Println(response, "this is the response u nkeoeoffffffffffffffffffffffeoeo")
+
+	w.Header().Set("content-type", "application/json")
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		fmt.Println("cant marshal the response into json")
+
+	}
+
 }
 
-func CreatePost(r *http.Request) error {
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "bad req", http.StatusBadRequest)
+		return
+	}
+	var err error
+	var postId int
+	fmt.Println("making post began")
 	user, err := m.GetUserByCookie(r)
 	if err != nil {
-		return err
+		http.Error(w, "user has no cookie", http.StatusUnauthorized)
+		fmt.Println(err)
+		return
 	}
 
 	title := r.FormValue("title")
 	content := r.FormValue("content")
+
+	file, fileHeader, err := r.FormFile("image")
+
+	if file == nil {
+		err = nil
+	}
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+	}
+
+	if fileHeader != nil {
+	if fileHeader.Size > 20 << 20  { // 20MB
+		http.Error(w, "400 Bad Request, File size greater than 20MB", http.StatusBadRequest)
+	}
+	}
 	categories := r.Form["category"]
+	if content == "" || title == "" {
+		http.Error(w, "can't create an empty post", http.StatusBadRequest)
+	}
+	fmt.Println(categories)
 	ids := m.GetCategoriesID(categories)
-	postId, err := m.SavePost(title, content, user.ID)
-	if err != nil {
-		return err
+	if file == nil {
+		postId, err = m.SavePost(title, content, nil, user.ID)
+	} else {
+		postId, err = m.SavePost(title, content, file, user.ID)
 	}
+	if err != nil {
+		fmt.Println("couldnt save post", err)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusFound)
 	m.LinkPostCategories(postId, ids)
-	return nil
 }
 
-func PostHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-
-		var post m.Post
-
-		var message string
-
-		err := json.NewDecoder(r.Body).Decode(&post)
-		if err != nil {
-			http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-		}
-
-		switch post.Username {
-		case "edit":
-			message, err = post.EditPost()
-			if err != nil {
-				http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-			}
-	
-		case "delete":
-			message, err = post.DeletePost()
-			if err != nil {
-				http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-			}
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(message))
-	} else {
-		http.Error(w, "404 Page Not Found", 404)
-	}
+type LikeReq struct {
+	PostId string `json:"postId"`
 }
 
-
-
-func CommentHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-
-		var Comment m.Comment
-
-		err := json.NewDecoder(r.Body).Decode(&Comment)
-		if err != nil {
-			http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-		}
-
-		user, err := m.GetUserByCookie(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		Comment = m.Comment{UserID: user.ID, PostID: Comment.PostID, Comment: Comment.Comment}
-
-		err = Comment.SaveComment()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Comment received"))
-	} else {
-		http.Error(w, "404 Page Not Found", 404)
+func checkCookie(w http.ResponseWriter, r *http.Request) (string, error) {
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		return "", err
 	}
+	return cookie.Value, nil
+
 }
 
-func LikeHandler(w http.ResponseWriter, r *http.Request) {
-	user, err := m.GetUserByCookie(r)
-	if err != nil {
-		if user != nil {
-			return
-		}
-		http.Error(w, "No active Cookie", 404)
-	}
-	if user != nil {
-		var postActionReqData m.PostActionReq
-		err = json.NewDecoder(r.Body).Decode(&postActionReqData)
-		if err != nil {
-			http.Error(w, "500", 500)
-			return
-		}
-		postId, _ := strconv.Atoi(postActionReqData.PostId)
-		commentId, _ := strconv.Atoi(postActionReqData.CommentId)
-		action := postActionReqData.Action
-		switch action {
-		case "like":
-			m.SaveLike(commentId, postId, user.ID)
-		case "unlike":
-			m.RemoveLike(commentId, postId, user.ID)
-		case "dislike":
-			m.SaveDislike(commentId, postId, user.ID)
-		case "removeDislike":
-			m.RemoveDislike(commentId, postId, user.ID)
-		}
-	}
-}
-
-func GetPostLikes(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("session")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			var postID = r.URL.Query().Get("postID")
-			ID, err := strconv.Atoi(postID)
-			if err != nil {
-				return
-			}
-			likesData, err := m.GetLikedPosts(ID)
-			if err != nil {
-				return
-			}
-
-			JSsender(w, likesData)
-			return
-		} else {
-			http.Error(w, err.Error(), 500)
-		}
-	}
-	user, err := m.GetUserByCookie(r)
-	if err != nil {
-		return
-	}
-	likesData, err := m.GetUserLikedPosts(user.ID)
-	if err != nil {
+func LikePost(w http.ResponseWriter, r *http.Request) {
+	// check if client has a cookie
+	sessionId, _ := checkCookie(w, r)
+	userId, session, err1 := m.SessionIsActive(sessionId)
+	if err1 != nil {
+		fmt.Println("post.controller.go Error func LikePost: ", err1)
 		return
 	}
 
-	JSsender(w, likesData)
-}
+	if session {
+		LikeReqData := new(LikeReq)
+		json.NewDecoder(r.Body).Decode(&LikeReqData)
+		postIdStr := LikeReqData.PostId
+		fmt.Println("Liked post id is: ", postIdStr)
+		postId, _ := strconv.Atoi(postIdStr)
 
-func GetComments(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+		m.SaveLike(postId, userId)
 
-		var postID = r.URL.Query().Get("postID")
-
-		ID, err := strconv.Atoi(postID)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		comments, err := m.GetCommentsForPost(ID)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		JSsender(w, comments)
 	}
+
+	// path := path.Base(r.URL.Path)
+
 }

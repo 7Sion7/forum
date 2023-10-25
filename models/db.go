@@ -17,6 +17,12 @@ func InitDB() {
 		log.Fatal(err)
 	}
 
+	// _, err = db.Exec("PRAGMA busy_timeout = 2000") // 2000 milliseconds = 2 seconds
+	// if err != nil {
+	// 	fmt.Println("nuff errs n ting inna it:", err)
+	// 	db.Close()
+	// }
+
 	// Create tables if they don't exist
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
@@ -24,7 +30,9 @@ func InitDB() {
 			email TEXT UNIQUE,
 			username TEXT UNIQUE,
 			password TEXT,
-			sessionId TEXT UNIQUE
+			sessionId TEXT UNIQUE,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
 
 		CREATE TABLE IF NOT EXISTS categories (
@@ -39,6 +47,7 @@ func InitDB() {
 			title TEXT,
 			content TEXT,
 			userId INTEGER,
+			image BLOB,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY(userId) REFERENCES users(id)
@@ -55,25 +64,36 @@ func InitDB() {
 		CREATE TABLE IF NOT EXISTS comments (
 			id INTEGER PRIMARY KEY,
 			content TEXT,
-			postId INTEGER,
-			userId INTEGER,
+			post_id INTEGER,
+			user_id INTEGER,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY(postId) REFERENCES posts(id),
-			FOREIGN KEY(userId) REFERENCES users(id)
+			FOREIGN KEY(post_id) REFERENCES posts(id),
+			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
 
 		CREATE TABLE IF NOT EXISTS likes (
 			id INTEGER PRIMARY KEY,
 			postId INTEGER,
-			comment_id INTEGER,
 			userId INTEGER,
 			value INTEGER,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY(postId) REFERENCES posts(id),
-			FOREIGN KEY(comment_id) REFERENCES comments(id),
 			FOREIGN KEY(userId) REFERENCES users(id)
+			UNIQUE(postId, userId)
+		);
+
+		CREATE TABLE IF NOT EXISTS comment_likes (
+			id INTEGER PRIMARY KEY,
+			comment_id INTEGER NOT NULL,
+			userId INTEGER NOT NULL,
+			value INTEGER,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(comment_id) REFERENCES comments(id),
+			FOREIGN KEY(userId) REFERENCES users(id),
+			UNIQUE(comment_id, userId)
 		);
 
         CREATE TABLE IF NOT EXISTS dislikes (
@@ -86,6 +106,8 @@ func InitDB() {
             FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE CASCADE,
             FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
         );
+
+		
         
 	`)
 	if err != nil {
@@ -101,9 +123,9 @@ func InitDB() {
 	}
 
 	// Set database connection pool limits
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(5 * 60 * 1000)
+	// db.SetMaxOpenConns(25)
+	// db.SetMaxIdleConns(25)
+	// db.SetConnMaxLifetime(5 * 60 * 1000)
 
 	fmt.Printf("Database initialized\n")
 }
@@ -138,13 +160,6 @@ func GetID(email string) (int, error) {
 	}
 	return userID, nil
 }
-
-// func DeleteLikesTable() {
-// 	_, err := db.Exec("DELETE FROM dislikes")
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
 
 func CloseDB() {
 	if db != nil {

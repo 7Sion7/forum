@@ -6,42 +6,34 @@ import (
 	r "forum/routes"
 	"log"
 	"net/http"
-	"os"
-	"os/exec"
-	"runtime"
+
+	//"os/exec"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func openBrowser(url string) error {
-	var cmd *exec.Cmd
+// func init() {
+// 	c.Tpl = template.Must(template.ParseGlob("templates/*.html"))
+// }
 
-	switch runtime.GOOS {
-	case "linux":
-		cmd = exec.Command("xdg-open", url)
-	case "windows":
-		cmd = exec.Command("cmd", "/c", "start", url)
-	default:
-		return os.ErrInvalid
-	}
-
-	return cmd.Start()
-}
+// func openBrowser(url string) error {
+// 	return exec.Command("xdg-open", url).Start()
+// }
 
 func main() {
 	models.InitDB()
 
-	defer models.CloseDB()
-
-	// models.DeleteLikesTable()
+	//defer models.CloseDB()fmt
+	fmt.Println("yoyo")
 
 	mux := http.NewServeMux()
-
 	r.SetUpRoutes(mux)
+	// posts, _ := models.GetPostsFromDB()
+	// fmt.Println(posts)
 
-	openBrowser("http://0.0.0.0:8888")
-	fmt.Println("Serving on Port ->:8888")
-	if err := http.ListenAndServe("0.0.0.0:8888", mux); err != nil {
+	// openBrowser("http://0.0.0.0:8888")
+	fmt.Println("Serving on Port -> http://localhost:8888")
+	if err := http.ListenAndServe(":8888", mux); err != nil {
 
 		log.Fatalf("Failure on Listening and Serving: %v", err)
 	}

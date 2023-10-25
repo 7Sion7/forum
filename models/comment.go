@@ -1,65 +1,96 @@
 package models
 
-// import "time"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 type Comment struct {
-	ID int `json:"id"`
-	Username string `json:"username"`
-	UserID   int    `json:"userId"`
-	PostID   string `json:"postId"`
-	Comment  string `json:"comment"`
+	ID             int       `json:"id"`
+	Username       string    `json:"username"`
+	Content        string    `json:"content"`
+	PostID         int       `json:"post_id"`
+	UserID         int       `json:"user_id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	Likes          int       `json:"likes"`
+	Dislikes       int       `json:"dislikes"`
+	UserLikeStatus int       `json:"user_like_status"`
 }
 
-func (comment Comment) SaveComment() error {
-	stmt, err := db.Prepare("INSERT INTO comments (content, postId, userId) VALUES (?, ?, ?)")
+func (c *Comment) Save() (int64, error) {
+	query := `insert into comments (content, post_id, user_id) VALUES (?,?,?)`
+	result, err := db.Exec(query, c.Content, c.PostID, c.UserID)
+
 	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	// Execute the prepared statement with the provided values and current timestamp
-	_, err = stmt.Exec(comment.Comment, comment.PostID, comment.UserID)
-	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	ID, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println("the comment id is: ", ID)
+	return ID, nil
 }
 
-// func getComments(ID int) (string, error) {
-// 	stmt, err := db.Prepare("SELECT content FROM comments WHERE id = ?")
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	defer stmt.Close()
+func GetComments(userID, postID int) ([]Comment, error) {
+	var comments []Comment
 
-// 	var comments string
-// 	// Assuming "idValue" is the ID of the comment you want to retrieve
-// 	err = stmt.QueryRow(ID).Scan(&comments)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return comments, nil
-// }
+	query := `
+	SELECT 
+    comments.id, 
+    users.username, 
+    comments.content, 
+    comments.post_id, 
+    comments.user_id, 
+    comments.created_at, 
+    comments.updated_at,
+    COALESCE(SUM(CASE WHEN comment_likes.value = 1 THEN 1 ELSE 0 END), 0) AS likes,
+    COALESCE(SUM(CASE WHEN comment_likes.value = -1 THEN 1 ELSE 0 END), 0) AS dislikes,
+    COALESCE(
+        (SELECT value FROM comment_likes 
+         WHERE comment_likes.comment_id = comments.id AND comment_likes.userId = ?), 
+    0) AS user_like_status
+FROM 
+    comments
+INNER JOIN 
+    users ON comments.user_id = users.id
+LEFT JOIN 
+    comment_likes ON comment_likes.comment_id = comments.id
+WHERE 
+    comments.post_id = ?
+GROUP BY 
+    comments.id
+ORDER BY 
+    comments.id DESC	
+    `
 
-// type Comment struct {
-//     ID          int       `json:"id"`
-//     Content     string    `json:"content"`
-//     PostID      int       `json:"post_id"`
-//     UserID      int       `json:"user_id"`
-//     CreatedAt   time.Time `json:"created_at"`
-//     UpdatedAt   time.Time `json:"updated_at"`
-// }
+	rows, err := db.Query(query, userID, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-// func (c *Comment) Save() error {
-//     // save the comment to the database
-// }
+	for rows.Next() {
+		comment := Comment{}
+		if err := rows.Scan(&comment.ID, &comment.Username, &comment.Content, &comment.PostID, &comment.UserID, &comment.CreatedAt, &comment.UpdatedAt, &comment.Likes, &comment.Dislikes, &comment.UserLikeStatus); err != nil {
+			log.Println(err)
+			continue
+		}
+		comments = append(comments, comment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	fmt.Println(comments,"dddddddddddddddddddddddddddddddddddddddddddddddddddffffffffffffffffffffffffffffff")
+	return comments, nil
+}
 
 // func GetCommentByID(id int) (*Comment, error) {
 //     // query the database for a comment with the given ID
-// }
-
-// func GetCommentsByPostID(id int) ([]*Comment, error) {
-//     // query the database for all comments on a given post
 // }
 
 // func GetCommentsByUserID(id int) ([]*Comment, error) {

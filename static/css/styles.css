@@ -1,0 +1,752 @@
+/* ########################################### */
+/*                 Global                      */
+/* ########################################### */
+* {
+  margin: 0;
+}
+
+button {
+  padding: 0;
+  border: none;
+}
+
+/* ----------------------------------------header */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em;
+  background: rgba(45, 46, 62);
+  /* background: rgb(89, 90, 114); */
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
+
+.navbar a {
+  cursor: pointer;
+  font-size: 1em;
+  color: white;
+}
+
+.navbar .sign-in:hover {
+  /* margin-left: auto; */
+  text-decoration: underline;
+}
+
+.navbar .brand {
+  font-weight: bolder;
+  font-size: 1.5em;
+}
+
+/* .navbar .sign-in {
+  right: 0;
+} */
+
+.navbar .account {
+  margin-left: 75%;
+  font-size: larger;
+  display: none;
+}
+
+.navbar .account:hover {
+  background-color: rgb(103, 131, 192);
+  padding: 0.35em;
+}
+
+/* .sign-in i {
+  font-size: 1.35em;
+} */
+
+.filter-button {
+  background: none;
+  text-align: left;
+  color: white;
+  cursor: pointer;
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 300;
+  width: 17rem;
+  border-radius: 4px;
+
+  border: 1px solid rgb(200, 195, 195);
+}
+
+.filter {
+  /* display:; */
+
+  margin-right: auto;
+  margin-left: 2rem;
+  color: white;
+  font-size: 1rem;
+  position: relative;
+
+  position: relative;
+}
+
+.dropdown-content a {
+  padding-inline: 16px;
+  padding-block: 12px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover {
+  color: #5a7bdd;
+}
+* {
+  font-family: monospace;
+}
+
+.filter:hover {
+  border-width: 2px;
+}
+
+.filter:hover .arrow {
+  transform: rotate(180deg);
+}
+
+.filter:hover > .dropdown-content {
+  opacity: 1;
+  visibility: visible;
+  border-right: 2px solid #384e8e;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* .filter:hover .filter i{
+  rotate: 180 deg;
+} */
+
+.filter .dropdown-content {
+  position: absolute;
+  background: rgb(5, 5, 5);
+  z-index: 16;
+  opacity: 0;
+  pointer-events: none;
+  max-height: 480px;
+  min-width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 2px solid black;
+  border-radius: 2px;
+  top: calc(100%);
+  transform: translateY(-10px);
+  transition: transform 150ms ease-in-out, opacity 150ms ease-in-out,
+    visibility 150ms ease-in-out;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.1);
+  visibility: hidden;
+}
+
+.filter .arrow {
+  position: absolute;
+  right: 0.5rem;
+  transition: transform 150ms ease-in-out;
+}
+
+.rightM {
+  margin-right: 1rem;
+  color: white;
+}
+
+.create-post-button {
+  margin-right: 1rem;
+  background: none;
+  cursor: pointer;
+  background-color: rgb(140, 140, 160);
+  padding: 0.2rem;
+}
+
+.create-post-button:hover {
+  background-color: rgb(166, 165, 165);
+}
+
+/*-------------------------------------------posts*/
+
+.liked {
+  color: rgb(233, 233, 234);
+}
+
+.post-footer {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+main {
+  word-wrap: break-word;
+  width: 570px;
+  max-width: 80%;
+  margin: auto;
+}
+
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+.see-more {
+  color: rgb(130, 132, 224);
+}
+
+#imageOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  cursor: pointer;
+}
+
+#imageOverlay img {
+  max-width: 90%;
+  max-height: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.post {
+  max-width: 100%;
+  max-height: auto;
+  margin-bottom: 10px;
+  background-color: rgb(26, 26, 27);
+  padding: 6px;
+  border-radius: 4px;
+  color: #fff;
+  border: 1px solid rgb(52, 53, 54);
+  justify-content: center;
+  align-items: center;
+}
+
+.post img{
+  display: block;
+  width: 60%;
+  height: auto;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.post-content {
+  max-height: 197px;
+  overflow: hidden;
+}
+
+.post:hover {
+  border-color: #5a5a5a;
+}
+
+/* .post span {
+  padding-right: 0.8rem;
+} */
+
+.username-error, .login-email-error{
+  color: white;
+}
+
+.post-user {
+  display: inline;
+}
+
+.post-title {
+  margin-bottom: 0.4rem;
+}
+
+.post-content {
+  margin-bottom: 0.3rem;
+}
+
+.post-categories {
+  width: 50%;
+}
+
+.post-header {
+  margin-bottom: 0.3rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.post-menu {
+  margin-left: auto;
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center;
+  padding: .3rem;
+  border-radius: .3rem;
+}
+
+.post-menu:hover {
+  background-color: rgb(110, 113, 116);
+}
+
+.dropdown .post-menu:focus + .post-menuu{
+  opacity: 1;
+}
+
+.dropdown{
+  position: relative;
+  margin-left: auto;
+}
+
+.post-menuu{
+  position: absolute;
+  right: 50%;
+  opacity: 0;
+  transform: translateY();
+  background-color: #333;
+}
+
+.post-menuu span {
+  display: inline-block;
+  padding: .3rem;
+}
+
+.post-menuu span:hover{
+  background-color: #444444;
+  cursor: pointer;
+}
+/* .post-header {
+     display: inline;
+ } */
+
+/* c-------------------------------------------------comment section start */
+.comment {
+  border-radius: 0.9em;
+  padding: 8px 12px;
+  color: #fff;
+  background-color: #333;
+
+  margin-bottom: 0.3rem;
+}
+
+::-webkit-scrollbar {
+  width: 8px; /* Set the width of the scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px; /* Set the radius for the scrollbar handle */
+  background-color: rgb(167, 167, 167); /* Color of the scrollbar handle */
+}
+
+.comments {
+  padding-right: 15px; /* Adjust this value as needed */
+}
+
+.comment .content {
+  font-weight: 400;
+  margin-top: 0.2rem;
+}
+
+.comment-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.2rem;
+}
+
+/* .comment-likes{
+  background-color: #5f5e5e;
+  padding:.5rem 0;
+ 
+} */
+
+.comment-button {
+  cursor: pointer;
+  background-color: rgb(66, 66, 66);
+  padding: 0.5rem;
+}
+
+.comment-button:hover {
+  background-color: rgb(104, 104, 104);
+}
+
+.comment-like-button {
+  border-right: 1px solid white;
+  border-radius: 1rem 0 0 1rem;
+}
+
+.comment-dislike-button {
+  /* border-top-right-radius: 1rem; */
+  /* padding:.5rem .5rem .5rem 0; */
+  border-radius: 0 1rem 1rem 0;
+}
+
+.ting1 {
+  border-radius: 1rem 0 0 1rem;
+  border-right: 1px solid #f6f2f2;
+}
+
+.ting2 {
+  border-radius: 0 1rem 1rem 0;
+}
+
+.ting {
+  padding: 0.3rem;
+  background-color: rgb(51, 51, 51);
+  margin: 0;
+}
+
+.ting:hover {
+  background-color: #757474;
+  cursor: pointer;
+}
+
+button {
+  background: none;
+  color: inherit;
+  /* 
+    border: none;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    text-align: left;  Default is center for buttons 
+    vertical-align: middle;
+    cursor: pointer;
+    -webkit-appearance: none; /* for older versions of Safari 
+    -moz-appearance: none; /* for older versions of Firefox 
+    appearance: none;
+    box-shadow: none;
+    text-shadow: none;
+    transition: none; 
+  */
+}
+
+/* Optional: You might also want to remove any focus rings, 
+   though be careful about accessibility implications */
+button:focus,
+input[type="button"]:focus,
+input[type="submit"]:focus,
+input[type="reset"]:focus {
+  box-shadow: none;
+}
+
+.comment-btn {
+  margin-left: 0.5rem;
+  padding: 0.3rem 0.6rem 0.3rem 0.6rem;
+  border-radius: 1rem;
+  box-shadow: 1px snow;
+}
+
+.comment-send:hover {
+  color: #757474;
+}
+
+.p {
+  cursor: pointer;
+}
+
+/* c-------------------------------------------------comment section end */
+
+.btn {
+  cursor: pointer;
+}
+
+.no-bg {
+  background: none;
+}
+
+.white {
+  color: white;
+}
+
+.comment-form {
+  border-radius: 10px; /* Adjust this value as needed */
+  position: relative;
+  background-color: #333;
+  margin-top: 1rem;
+}
+.comment-input-container {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0.5rem;
+}
+.comment-input {
+  width: 100%;
+  background: none;
+  resize: vertical; /* To allow vertical resize only */
+  outline: none;
+  border: none;
+  padding: 10px; /* Padding inside the textarea */
+  color: white;
+  min-height: 54px;
+}
+.comment-send {
+  position: absolute;
+  bottom: 10px; /* Adjust this value to move the button up/down */
+  right: 10px; /* Adjust this value to move the button left/right */
+  background: none;
+  border: none;
+  color: #5f5e5e;
+}
+.fa-send {
+  cursor: pointer;
+}
+
+/*--------------------------------------create post modal*/
+#modal-container {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 99;
+}
+
+#post-form {
+  margin: auto;
+  position: relative;
+  background-color: rgb(8, 8, 8);
+  width: 450px;
+  max-height: 600px;
+  /* min-height: 400px; */
+  padding: 0 20px 20px 20px;
+  color: #fff;
+  border-radius: 10px;
+  z-index: 100;
+  border: 1px solid rgb(95, 95, 95);
+  overflow-y: hidden;
+}
+
+.form-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid whitesmoke;
+}
+
+#close-button {
+  font-size: 2rem;
+  position: absolute;
+  color: #333;
+  right: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  background-color: rgb(164, 171, 250);
+  text-align: center;
+  line-height: 30px;
+  cursor: pointer;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.categories {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.categories-header {
+  display: inline;
+}
+
+.category {
+  padding: 10px;
+  display: inline;
+  width: max-content;
+}
+
+.category input,
+label {
+  cursor: pointer;
+}
+
+#title {
+  width: 100%;
+  margin-bottom: 12px;
+  border: none;
+  background-color: #363444;
+  color: #e8e8e9;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.form-text {
+  width: 100%;
+  min-height: 210px;
+  /* max-height: 250px; */
+  outline: none;
+  /* outline: none; */
+  background: none;
+  /* border: 1px solid rgb(180, 178, 178); */
+  border: none;
+  color: #a9a9ad;
+  padding: 10px;
+  padding-bottom: 40px;
+  resize: none;
+  overflow-y: auto;
+}
+
+.post-box {
+  position: relative;
+  padding-bottom: 40px;
+  /* border: 1px solid gray; */
+}
+
+#submit-button {
+  padding: .5rem;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: white;
+  background-color: rgb(112, 119, 254);
+  outline: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#error-message {
+  text-align: center;
+  padding: 10px;
+  color: rgb(234, 234, 234);
+}
+.email-error{
+  color: rgb(234, 234, 234);
+
+}
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  font-size: 14px;
+  font-family: monospace;
+  /* background: linear-gradient(rgb(89, 113, 179), azure); */
+  background-repeat: no-repeat;
+  background-color: rgb(0, 0, 0);
+}
+
+.seperate {
+  margin-top: 6rem;
+}
+
+.hidden {
+  display: none;
+}
+
+#overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1;
+}
+/* ----------------------------------------------sign-in-modal */
+.signupForm {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -90%);
+  max-width: 80%;
+  width: 300px;
+  background-color: rgb(0, 0, 0);
+  position: fixed;
+  z-index: 122;
+  border-radius: 3%;
+  padding: 1.2rem;
+  box-shadow: 0px 0px 2.5px rgba(255,255,255,0.5); /* This adds a white shadow */
+
+}
+
+
+.signInHeader .title {
+  /* // flex-grow: 1;
+   // text-align: center; Center the text inside the title */
+  text-align: center;
+  color: #cccccc;
+}
+
+.signInHeader .closeButton {
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  position: absolute;
+  right: 1rem;
+  top: 0.3rem;
+}
+
+.input-box {
+  margin-top: 1.2rem;
+  height: 3rem;
+  position: relative;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid white;
+  color: white;
+  background: none;
+  padding-left: 3rem;
+}
+
+.input-box i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  color: rgb(205, 205, 205);
+  font-size: 1.5rem;
+}
+
+.error-message {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.signupForm .button {
+  background: #5e6fa3;
+  margin-top: 1rem;
+  width: 100%;
+  color: #fff;
+  padding: 0.5rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.signupForm .register {
+  text-align: center;
+  margin-top: 1rem;
+  color: white;
+}
+
+.register a {
+  text-decoration: none;
+}
+
+.register a:hover {
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+/* ------------------------------------------- */
+
+.container {
+  padding-inline: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}

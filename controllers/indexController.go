@@ -1,115 +1,107 @@
 package controllers
 
 import (
-	"database/sql"
+	"fmt"
 	m "forum/models"
-	"log"
 	"net/http"
-	"time"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
 
-	var user *m.User
-
-	var data *m.UserCheckResponse
-
-	var available = false
-
-	if r.Method == "POST" {
-		switch r.URL.Path {
-		case "/log-in":
-			user = getUser(r)
-			isUser, err := m.Check4User(user.Email, user.Password)
-			user.Password = ""
-			if err != nil || !isUser {
-				http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-				return
-			}
-			cookie, err := CookieSetter(user)
-			if err != nil {
-				http.Error(w, "500", http.StatusInternalServerError)
-				return
-			}
-
-			http.SetCookie(w, cookie)
-			http.Redirect(w, r, "/", http.StatusFound)
-		case "/sign-up":
-			user = getUser(r)
-
-			cookie, err := CookieSetter(user)
-			if err != nil {
-				http.Error(w, "500", http.StatusInternalServerError)
-				return
-			}
-
-			err = user.Register()
-			user.Password = ""
-			if err != nil {
-				http.Error(w, "CANT SAVE USER", http.StatusBadRequest)
-				return
-			}
-			http.SetCookie(w, cookie)
-			http.Redirect(w, r, "/", http.StatusFound)
-		case "/post":
-			err := CreatePost(r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			http.Redirect(w, r, "/", 200)
-		case "/del-cookie":
-			expiredCookie := http.Cookie{
-				Name:    "session",
-				Value:   "",
-				Expires: time.Unix(0, 0),
-			}
-			http.SetCookie(w, &expiredCookie)
-			http.Redirect(w, r, "/", http.StatusOK)
-		}
+	if r.URL.Path != "/" {
+		http.Error(w, "404 doesnt exist", http.StatusNotFound)
+		return
 	}
-
-	_, err = r.Cookie("session")
-	if err != http.ErrNoCookie {
+	var internal = "INTERNAL SERVER ERROR:"
+	var user m.User
+	filter := "home"
+	user1, _ := m.GetUserByCookie(r)
+	if user1 != nil {
+		user = *user1
+	}
+	var posts []m.Post
+	var err error
+	category := r.URL.Query().Get("category")
+	inErr := fmt.Sprintf("%s Failed to retrieve posts", internal)
+	if category == "liked-posts" {
+		filter = category
+		posts, err = m.FilterByLiked(user.ID)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			// Handle the error (e.g., show an error page)
+			fmt.Println("error with getposts")
+			http.Error(w, inErr, http.StatusInternalServerError)
 			return
 		}
-		user, err = m.GetUserByCookie(r)
+	} else if category == "my-posts" {
+		filter = category
+		posts, err = m.FilterByUserPosts(user.ID)
 		if err != nil {
-			log.Println("Yo", err)
-			//http.Error(w, err.Error(), http.StatusInternalServerError)
+			// Handle the error (e.g., show an error page)
+			fmt.Println("error with getposts")
+			http.Error(w, inErr, http.StatusInternalServerError)
 			return
 		}
-
-		posts, err := m.GetPostsFromDB()
+	} else if category != "" {
+		fmt.Println("category is:", category)
+		filter = category
+		posts, err = m.FilterByCategory(user.ID, category)
+		fmt.Println("lenght is :", len(posts), posts)
 		if err != nil {
-			log.Println(err)
-			//http.Error(w, err.Error(), http.StatusInternalServerError)
+			// Handle the error (e.g., show an error page)
+			fmt.Println("error with getpostsFilter")
+			http.Error(w, inErr, http.StatusInternalServerError)
 			return
 		}
-		available = true
-		user = &m.User{ID: user.ID, Username: user.Username, Post: posts}
 	} else {
-		posts, err := m.GetPostsFromDB()
+		posts, err = m.GetPostsFromDB(user.ID)
 		if err != nil {
-			if err != sql.ErrNoRows {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		} else {
-			user = &m.User{Post: posts}
+			// Handle the error (e.g., show an error page)
+			fmt.Println("error with getposts")
+			http.Error(w, inErr, http.StatusInternalServerError)
+			return
 		}
 	}
 
-	data = &m.UserCheckResponse{
-		Available: available,
-		UserInfo:  user,
+	// var category string
+
+	// for i, j := 0, len(posts)-1; i < j; i, j = i+1, j-1 {
+	// 	posts[i], posts[j] = posts[j], posts[i]
+	// }
+	categories := []string{"biology", "etymology"}
+	data := struct {
+		Posts      []m.Post
+		Categories []string
+		User       m.User
+		Filter     string
+	}{
+		Posts:      posts,
+		Categories: categories,
+		User:       user,
+		Filter:     filter,
 	}
 
-	err = Tpl.Execute(w, data)
-	if err != nil {
-		log.Println("Template execution error:", err)
+	errs := Tpl.ExecuteTemplate(w, "home.html", data)
+
+	if errs != nil {
+		fmt.Println("no sir", errs)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
 	}
 }
+
+// func GetPostLikes(w http.ResponseWriter, r *http.Request) {
+
+// 	user, err := m.GetUserByCookie(r)
+// 	if err != nil {
+// 		fmt.Println("no liked posts", err)
+// 		return
+// 	}
+// 	likesData, err := m.GetLikedPosts(user.ID)
+// 	if err != nil {
+// 		fmt.Println("error with suttin")
+// 	}
+// 	err1 := json.NewEncoder(w).Encode(likesData)
+// 	if err1 != nil {
+// 		fmt.Println("cant encode suttin")
+// 	}
+// }

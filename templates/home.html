@@ -1,149 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forum</title>
-    <link rel="stylesheet" href="../static/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital@1&display=swap" rel="stylesheet">
-</head>
-<script src="../static/script.js" defer></script>
-<body>
-    {{if .}}
-    {{if .Available}}
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            signIn();
+    <link rel="stylesheet" href="../static/css/styles.css">
 
-        })
-    </script>
-    {{end}}
+</head>
+
+<body>
+    <div class="hidden" id="overlay"></div>
     <header>
         <nav class="navbar">
             <a href="/" class="brand">Forum</a>
-            {{if .UserInfo}}
-            <a class="account" id="account-link">{{.UserInfo.Username}}<i class ="fa fa-user-circle"></i></a>
+            <div class="filter">
+                <button class="filter-button" id="dropdown-toggle">{{.Filter}}<i
+                        class="fa fa-caret-down arrow"></i></button>
+                <div class="dropdown-content">
+                    {{if .User.Status}}
+                    <a href="/?category=my-posts">my Posts <i class="fa fa-user"></i></a>
+                    {{end}}
+                    {{if .User.Status}}
+                    <a href="/?category=liked-posts">Liked Posts <i class="fa fa-heart"></i></a>
+                    {{end}}
+                    {{ range .Categories}}
+                    <a href="/?category={{.}}">{{.}}</a>
+                    {{end}}
+                </div>
+            </div>
+
+
+            <a class="account" id="account-link"> <i class="fa fa-user-circle"></i></a>
+            {{if not .User.Status}}
+            <a class="sign-in" id="sign-in">Sign In <i class="fa fa-sign-in"></i></a>
+            {{else}}
+            <span class="rightM"><i class="fa fa-user"></i> {{.User.Username}}</span>
+            <button class="create-post-button" id="create-post-button">
+                Create Post <i class="fa fa-pencil" aria-hidden="true"></i>
+            </button>
+            <button class="btn no-bg white" id="sign-out-btn">Sign Out <i class="fa fa-sign-out"></i></button>
+
             {{end}}
-            <a class="sign-in" id="sign-in">Sign In<i class="fa fa-sign-in" id="sign-i"></i></a>
+
+            <!-- SignForm------------------------- -->
+            <div class="signupForm hidden" id="signupForm">
+                <form id="signupForm" method="POST" action="/sign-up">
+                    <div class="signInHeader">
+                        <h3 class="title"> register to Forum</h3>
+                        <span id="signInCloseButton" class="closeButton">&times</span>
+                    </div>
+                    <!--  ////-->
+                    <div class="input-box">
+                        <input id="signupUsername" type="text" name="username" onblur="checkUsername(this.value)"
+                            placeholder="Username" required>
+                        <i class="fa fa-user-circle" aria-hidden="true"></i>
+
+                    </div>
+                    <!-- //// -->
+                    <div class="input-box">
+                        <input id="sign-up-email" type="email" name="email" onblur="checkEmail(this.value)"
+                            placeholder="Email" required>
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="password" name="password" placeholder="Password" required>
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </div>
+                    <div class="error-message username-error" id="username-error"></div>
+                    <div class="error-message email-error" id="email-error"></div>
+                    <button class="sign-in button" type="submit">Sign up</button>
+                    <div class="register">
+                        Already have an account? <a id="loginButton">Login</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- loginForm -->
+
+            <div class="signupForm hidden" id="loginForm">
+                <form id="loginForm" method="POST" action="/login">
+                    <div class="signInHeader">
+                        <h3 class="title"> Login to Forum</h3>
+                        <span id="loginCloseButton" class="closeButton">&times</span>
+                    </div>
+
+
+                    <div class="input-box">
+                        <input type="email" name="email" placeholder="Email" required>
+                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="password" name="password" placeholder="Password" required>
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </div>
+                    <div class="error-message login-email-error"></div>
+                    <button class="sign-in button" type="submit">login</button>
+                    <div class="register">
+                        Don't have an account? <a id="signupButton">Register</a>
+                    </div>
+                </form>
+            </div>
         </nav>
     </header>
-    <div class="everything">
-        <button class="post_btn" id="create-post-button">Create Post <span class="plus-sign">&plus;</span></button>
+    <div class="seperate">
+
+        <!-- Hidden until create post button is clicked -->
         <div id="modal-container">
-            <div class="post-form" id="post-form">
+            <div id="post-form">
                 <div class="form-header">
-                    <span id="close-button" onclick="closePopup()" >&times;</span>
-                    <h2>Create post</h2>
+                    <span id="close-button">&times;</span>
+                    <h2 style="color: #b3b9ff ;">Create post</h2>
                 </div>
-                    <form action="/post" id="create-post-form" method="post">
-                        <div class="categories">
-                            <h3 class="categories-header">Categories:</h3>
-                            <div class="category">
-                                <label for="etymology">etymology</label>
-                                <input type="checkbox"  id="etymology" name="category"
-                                    value="etymology">
-                            </div>
-                            <div class="category">
-                                <label for="biology">biology</label>
-                                <input type="checkbox" id="biology" name="category" value="biology">
-                            </div>
+
+                <form action="/create-post" id="create-post-form" method="post" enctype="multipart/form-data">
+                    <div class="categories">
+                        <h3 class="categories-header">Categories:</h3>
+                        <div class="category">
+                            <label for="etymology">etymology</label>
+                            <input type="checkbox" id="etymology" name="category" value="etymology">
                         </div>
-                            <label for="image">Upload Image:</label>
-                            <input type="file" id="image" name="image">
-                            <input id="title" type="text" name="title" placeholder="Title" required>
-                            <textarea class="form-text" name="content" placeholder="Content" required></textarea>
-                            <button type="submit">Submit</button>
-                    </form>
-            </div>
-        </div>
-        <div class="error-container" id="err">
-            <div class="error-popup">
-                <p>You are not logged in. Please log in to continue.</p>
-                <button onclick="closePopup()">Close</button>
-            </div>
-        </div>
-        <div class="overlay" id="popup-container">
-            <div class="popup-container" id="container-div">
-                <a class="close" onclick="closePopup()" id="close">&times;</a>
-            <div class="signup cntr" id="signup">
-                <form id="sign-up-form" method="POST" action="/sign-up">
-                <label class="labels">Join <span class="forum">Forum</span></label>
-                <br>
-                <br>
-                <br>
-                <span class="error-message" id="error"></span>
-                <p><input type="text" name="username" placeholder="Username" onblur="checkUsername(this.value)" required></p>
-                <p><input type="email" name="email" placeholder="Email" onblur="checkEmail(this.value)" required></p>
-                <p><input type="password" name="password" placeholder="Password" required></p>
-                <button type="submit">Sign up</button>
+                        <div class="category">
+                            <label for="biology">biology</label>
+                            <input type="checkbox" id="biology" name="category" value="biology">
+                        </div>
+                    </div>
+
+                    <input id="title" type="text" name="title" placeholder="Title" required>
+
+                    <div class="image-upload">
+                        <label for="image">Upload an Image:</label>
+                        <input type="file" id="image" name="image" accept="image/*,video/*">
+                    </div>                
+
+                    <div class="post-box">
+                        <textarea class="form-text" name="content" placeholder="Content..." required></textarea>
+                        <button class="p" id="submit-button" type="submit">Submit</button>
+                    </div>
                 </form>
-                <p class="text">Already have an account? <a class="register" id="login_btn">Log In</a></p>
-            </div>
-            <div id="sign_out" class="sign-out cntr">
-                <label class="labels">Are you sure you want to sign out?</label>
-        
-                <input type="button" onclick="signOut()" value="Yes">
-                <input type="button" onclick="closePopup()" value="No">
-            </div>
-            <div class="login cntr" id="login">
-                <form id="sign-in-form" method="POST" action="/log-in">
-                <label class="labels">Sign In to <span class="forum">Forum</span></label>
-                <br>
-                <br>
-                <br>
-                <p><input type="email" name="email" placeholder="Email" required></p>
-                <p><input type="password" name="password" placeholder="Password" required></p>
-                <button type="submit">Log In</button>
-                </form>
-                <p class="text">Don't have an account? <a class="register" id="register_btn">Register</a></p>
-            </div>
+
+
+                <div id="error-message" style="display: none;"></div>
             </div>
         </div>
-        {{if .UserInfo}}
-        {{if .UserInfo.Post}}
-        {{range .UserInfo.Post}}
-        <div class="posts" id="post{{.ID}}">
-            <pre class="author" ><i class="fa fa-user-circle"></i>{{.Username}}</pre>
-            <br>
-            <br>
-            <div class="content">
-                <p class="title" id="{{.ID}}-title">{{.Title}}</p>
-                <!-- <div class="image"><img src="../dog.jpg" alt="">Image</div> -->
-                <div class="written-content" id="{{.ID}}-content">{{.Content}}</div>
-            </div>
-            <br>
-            <div class="comment-page"> 
-            <div class="comment" >
-                <textarea class="comment-box" name="comment" id="{{.ID}}-comment" rows="2" cols="40" placeholder="Write your comment..." required></textarea>
-                <button id="{{.ID}}" class="submit-button" type="submit" onclick="comment(this.id)">Comment</button>
-            </div>
-            <div class="interaction-container">
-                <div class="likes-container" id="likes-container-{{.ID}}">
-                    <button class="like-button" id="{{.ID}}-like" onclick="likeSender(this.id)">
-                    <i class="fa fa-thumbs-o-up"></i>
-                    <span class="like-count" id="{{.ID}}-1">{{.Likes}}</span>
-                    </button>
-                    <button class="dislike-button" id="{{.ID}}-dislike" onclick="likeSender(this.id)">
-                        <i class="fa fa-thumbs-o-down"></i>
-                        <span class="dislike-count" id="{{.ID}}-2">{{.Dislikes}}</span>
-                    </button>
+        <main>
+            {{ range .Posts}}
+            <div class="post" id="post-{{.ID}}">
+                <div class="post-header">
+                    <span class="post-user"><i class="fa fa-user-circle" aria-hidden="true"></i>
+                        {{ .Username }}</span>
+                    <span class="post-categories">Categories: {{ range .Categories }}{{ . }} {{ end }}</span>
+                    <div class="dropdown">
+                        <button class="post-menu p">
+                            <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                        </button>
+                        <div class="post-menuu">
+                            <span>delete post</span>
+                            <span>editpost</span>
+                        </div>
+                    </div>
                 </div>
-                <span id="comment-btn-{{.ID}}" class="btns" onclick="showComments(this.id)">{{.NumOfComms}} <i class="fa fa-comment"></i> comments</span>
+                <h3 class="post-title">{{.Title}}</h3>
+                {{if eq (len .Image) 0}}
+                {{else}}
+                <img class="image" src="data:image/jpeg;base64,{{ .Image }}" alt="Image">
+                {{end}}
+                <p class="post-content" style="font-weight:100; ">{{ .Content }}</p>
+                <button class="see-more no-bg white p" style="display: none;">See More...></button>
+                <div class="post-footer">
+                    <!-- //likes -->
+                        <button class="ting1 ting post-l P">
+                            <i
+                                class="fa {{if eq .UserLikeStatus 1}}fa-thumbs-up liked{{else}}fa-thumbs-o-up{{end}} {{if $.User.Status}}likes{{end}}"></i>
+                            <span class="like-count">{{.Likes }}</span>
+                        </button><button class="ting2 ting post-d" style="cursor: pointer;">
+                            <i
+                                class="fa {{ if eq .UserLikeStatus -1 }}fa-thumbs-down disliked{{ else }}fa-thumbs-o-down{{ end }} {{if $.User.Status}}dislikes{{end}}"></i>
+                            <span class="like-count">{{ .Dislikes }}</span>
+                        </button>
+
+                    <!-- comment btn -->
+
+                        <button class=" ting btn comment-btn" id="comment{{.ID}}">
+                            <i class="fa fa-comment"></i> comments
+                        </button>
+                    <!--  -->
+                </div>
+                <!-- comments section -->
+                <div class="comments hidden" id="comments-{{.ID}}" style=" overflow-y: auto; max-height: 60vh; ">
+                </div>
+                <!--  -->
+                <form class="comment-form" id="form-{{.ID}}">
+                    <div class="comment-input-container">
+                        <input type="hidden" name="postID" value="{{.ID}}">
+                        <textarea name="comment" class="comment-input" placeholder="Write a comment..."></textarea>
+                    </div>
+                    <button type="submit" class="comment-send"><i class="fa fa-send"></i></button>
+                </form>
             </div>
-            <div class="comment-section" id="comment-section-{{.ID}}">
-        </div>
-        </div>
-        </div>
-        <br>
-        <br>
-        {{end}}
-        {{end}}
-        {{end}}
-        {{end}}
+
+            {{end}}
+        </main>
     </div>
+
+
+    <script src="/static/js/script.js"></script>
+    <!-- <script src="/static/js/script.js"></script> -->
 </body>
-<!-- <footer>
-    <span>&copy;  Forum | All Rights Reserved</span> -->
+
 </html>

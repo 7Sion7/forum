@@ -7,14 +7,16 @@ import "fmt"
 func GetCategoriesID(categories []string) []int {
 	Ids := []int{}
 
-	for _, v := range categories{
+	for i, v := range categories{
 		var id int
 		err := db.QueryRow("SELECT id FROM categories WHERE name = ?",v).Scan(&id)
 		if err!= nil {
 			fmt.Println("cant get categories, Error: ", err)
 		}
+		fmt.Printf("inserted category %v\n",i)
 		Ids = append(Ids, id)
 	}
+	fmt.Println(Ids)
 	return Ids
 }
 
@@ -24,8 +26,11 @@ func LinkPostCategories(postId int, categoryIds []int){
 		if err!= nil{
 			fmt.Println("Error inserting into post_categories table: ", err)
 		}
+		fmt.Printf("inserted post_category %v\n",categoryIds[i])
 	}
 }
+
+
 
 
 // func SaveCategory(category string) {
