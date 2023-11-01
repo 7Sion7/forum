@@ -1,6 +1,6 @@
 # Forum Project
 
-This project is a forum, users can sign up, create and like posts, as well as comment on them and like the comments, and the posts can be text, or images or GIFs. 
+This project is a forum, users can sign up, create and like posts, as well as comment on them and like the comments, the posts can be text, or images or GIFs. 
 
 Development:
 
