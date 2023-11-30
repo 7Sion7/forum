@@ -47,7 +47,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		posts, err = m.FilterByCategory(user.ID, category)
 		fmt.Println("lenght is :", len(posts), posts)
 		if err != nil {
-			// Handle the error (e.g., show an error page)
+			// HandTplle the error (e.g., show an error page)
 			fmt.Println("error with getpostsFilter")
 			http.Error(w, inErr, http.StatusInternalServerError)
 			return
@@ -80,7 +80,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		Filter:     filter,
 	}
 
-	errs := Tpl.ExecuteTemplate(w, "home.html", data)
+	errs := Tpl.Execute(w, data)
 
 	if errs != nil {
 		fmt.Println("no sir", errs)

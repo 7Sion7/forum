@@ -81,9 +81,9 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if fileHeader != nil {
-	if fileHeader.Size > 20 << 20  { // 20MB
-		http.Error(w, "400 Bad Request, File size greater than 20MB", http.StatusBadRequest)
-	}
+		if fileHeader.Size > 20<<20 { // 20MB
+			http.Error(w, "400 Bad Request, File size greater than 20MB", http.StatusBadRequest)
+		}
 	}
 	categories := r.Form["category"]
 	if content == "" || title == "" {

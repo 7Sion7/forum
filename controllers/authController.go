@@ -13,7 +13,7 @@ import (
 )
 
 var err error
-var Tpl = template.Must(template.ParseGlob("templates/*.html"))
+var Tpl = template.Must(template.ParseFiles("templates/index.html"))
 
 // type loggedIn struct {
 // 	LoggedIn bool `json:"loggedIn"`
@@ -121,13 +121,6 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 func getUser(r *http.Request) *m.User {
 	return &m.User{Email: r.FormValue("email"), Username: r.FormValue("username"), Password: r.FormValue("password")}
-}
-
-func UsersHandler(w http.ResponseWriter, r *http.Request) {
-	err = Tpl.ExecuteTemplate(w, "sign-in.html", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 // ----------------------------------------------------ajax
